@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema OLS con Validación de Modelo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .upload-section {
+            background: #f8f9fa;
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #333;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .file-upload {
+            border: 3px dashed #667eea;
+            padding: 40px;
+            text-align: center;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .file-upload:hover {
+            background: #f0f4ff;
+            border-color: #764ba2;
+        }
+
+        .file-upload i {
+            font-size: 3em;
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 40px;
+            border: none;
+            border-radius: 50px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.3s, box-shadow 0.3s;
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .results {
+            display: none;
+            animation: fadeIn 0.5s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .result-section {
+            margin-bottom: 30px;
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 15px;
+        }
+
+        .result-section h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 1.8em;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        thead {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        th, td {
+            padding: 15px;
+            text-align: left;
+        }
+
+        tbody tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+
+        tbody tr:hover {
+            background: #e9ecef;
+        }
+
+        .badge {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: 600;
+        }
+
+        .badge-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .badge-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .diagnostic-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .diagnostic-card h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .diagnostic-result {
+            display: flex;
+            justify-content: space-between;
+            margin: 10px 0;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 5px;
+        }
+
+        .plot-container {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .plot-container img {
+            max-width: 100%;
+            border-radius: 10px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 40px;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #dc3545;
+        }
+
+        .info-box {
+            background: #d1ecf1;
+            color: #0c5460;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #17a2b8;
+        }
+
+        .download-btn {
+            background: #28a745;
+            display: inline-block;
+            text-decoration: none;
+            margin-top: 20px;
+        }
+
+        .download-btn:hover {
+            background: #218838;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📊 Sistema de Regresión Lineal OLS</h1>
+            <p>Con Validación Completa de Supuestos del Modelo</p>
+        </div>
+
+        <div class="content">
+            <div class="upload-section">
+                <h2 style="margin-bottom: 20px; color: #333;">Cargar Datos y Configurar Modelo</h2>
+                
+                <form id="regressionForm" enctype="multipart/form-data">
+                    <div class="form-group">
+                        <label>📁 Archivo de Datos (CSV o Excel)</label>
+                        <input type="file" id="fileInput" name="file" accept=".csv,.xlsx,.xls" required>
+                        <small style="color: #666; display: block; margin-top: 5px;">
+                            Máximo 5000 observaciones, formato CSV o Excel
+                        </small>
+                    </div>
+
+                    <div class="form-group">
+                        <label>📈 Variable Dependiente (Y)</label>
+                        <input type="text" id="yVar" name="y_var" placeholder="Ejemplo: ventas, precio, y" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>📊 Variables Independientes (X) - Separadas por comas (1-10)</label>
+                        <input type="text" id="xVars" name="x_vars" 
+                               placeholder="Ejemplo: x1,x2,x3 o precio,publicidad,competencia" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>🔢 Incluir Intercepto</label>
+                        <select id="intercept" name="intercept">
+                            <option value="true" selected>Sí</option>
+                            <option value="false">No</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>📉 Nivel de Significancia (α)</label>
+                        <select id="alpha" name="alpha">
+                            <option value="0.01">0.01 (1%)</option>
+                            <option value="0.05" selected>0.05 (5%)</option>
+                            <option value="0.10">0.10 (10%)</option>
+                        </select>
+                    </div>
+
+                    <button type="submit" class="btn">🚀 Ejecutar Regresión y Validación</button>
+                </form>
+            </div>
+
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <h3>Procesando datos y ejecutando validación...</h3>
+            </div>
+
+            <div id="errorContainer"></div>
+
+            <div class="results" id="results">
+                <div class="result-section">
+                    <h2>📋 Coeficientes Estimados</h2>
+                    <div id="coefficientsTable"></div>
+                </div>
+
+                <div class="result-section">
+                    <h2>📊 Resumen del Modelo</h2>
+                    <div id="summaryTable"></div>
+                </div>
+
+                <div class="result-section">
+                    <h2>🔬 Validación de Supuestos del Modelo</h2>
+                    <div id="diagnosticsContainer"></div>
+                </div>
+
+                <div class="result-section">
+                    <h2>📈 Gráficos de Diagnóstico</h2>
+                    <div class="plot-container" id="plotContainer"></div>
+                </div>
+
+                <a href="/download" class="btn download-btn">💾 Descargar Resultados Completos (Excel)</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('regressionForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const loading = document.getElementById('loading');
+            const results = document.getElementById('results');
+            const errorContainer = document.getElementById('errorContainer');
+            
+            loading.style.display = 'block';
+            results.style.display = 'none';
+            errorContainer.innerHTML = '';
+            
+            const formData = new FormData(e.target);
+            
+            try {
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(data.error || 'Error al procesar datos');
+                }
+                
+                // Mostrar coeficientes
+                displayCoefficients(data.coefficients);
+                
+                // Mostrar resumen
+                displaySummary(data.summary);
+                
+                // Mostrar diagnósticos
+                displayDiagnostics(data.diagnostics);
+                
+                // Mostrar gráficos
+                displayPlot(data.plot);
+                
+                loading.style.display = 'none';
+                results.style.display = 'block';
+                
+            } catch (error) {
+                loading.style.display = 'none';
+                errorContainer.innerHTML = `
+                    <div class="error">
+                        <strong>❌ Error:</strong> ${error.message}
+                    </div>
+                `;
+            }
+        });
+        
+        function displayCoefficients(coefficients) {
+            let html = '<table><thead><tr>';
+            html += '<th>Variable</th><th>Beta (β̂)</th><th>Error Estándar</th><th>t</th>';
+            html += '<th>P-value</th><th>IC 95% Inferior</th><th>IC 95% Superior</th><th>Significativo</th>';
+            html += '</tr></thead><tbody>';
+            
+            coefficients.forEach(row => {
+                const sigClass = row.Significativo === 'Sí' ? 'badge-success' : 'badge-danger';
+                html += `<tr>
+                    <td><strong>${row.Variable}</strong></td>
+                    <td>${row.Beta.toFixed(6)}</td>
+                    <td>${row.SE.toFixed(6)}</td>
+                    <td>${row.t.toFixed(4)}</td>
+                    <td>${row.p_value.toFixed(6)}</td>
+                    <td>${row.IC95_low.toFixed(6)}</td>
+                    <td>${row.IC95_high.toFixed(6)}</td>
+                    <td><span class="badge ${sigClass}">${row.Significativo}</span></td>
+                </tr>`;
+            });
+            
+            html += '</tbody></table>';
+            document.getElementById('coefficientsTable').innerHTML = html;
+        }
+        
+        function displaySummary(summary) {
+            let html = '<table><tbody>';
+            
+            const labels = {
+                'n_observaciones': 'Número de Observaciones (n)',
+                'k_parametros': 'Número de Parámetros (k)',
+                'grados_libertad': 'Grados de Libertad',
+                'RSS': 'Suma de Cuadrados de Residuos (RSS)',
+                'sigma2': 'Varianza del Error (σ²)',
+                'R2': 'R² (Coeficiente de Determinación)',
+                'R2_ajustado': 'R² Ajustado',
+                'intercepto_usado': 'Intercepto Usado',
+                'filas_eliminadas': 'Filas Eliminadas (NA)',
+                'nivel_significancia': 'Nivel de Significancia (α)'
+            };
+            
+            for (let key in summary) {
+                let value = summary[key];
+                if (typeof value === 'number' && !Number.isInteger(value)) {
+                    value = value.toFixed(6);
+                }
+                html += `<tr>
+                    <td><strong>${labels[key] || key}</strong></td>
+                    <td>${value}</td>
+                </tr>`;
+            }
+            
+            html += '</tbody></table>';
+            document.getElementById('summaryTable').innerHTML = html;
+        }
+        
+        function displayDiagnostics(diagnostics) {
+            let html = '';
+            
+            // Jarque-Bera
+            const jb = diagnostics.jarque_bera;
+            html += `
+                <div class="diagnostic-card">
+                    <h3>🔔 Prueba de Normalidad (Jarque-Bera)</h3>
+                    <div class="diagnostic-result">
+                        <span>Estadístico JB:</span>
+                        <strong>${jb.statistic.toFixed(4)}</strong>
+                    </div>
+                    <div class="diagnostic-result">
+                        <span>P-value:</span>
+                        <strong>${jb.p_value.toFixed(6)}</strong>
+                    </div>
+                    <div class="diagnostic-result">
+                        <span>Skewness:</span>
+                        <strong>${jb.skewness.toFixed(4)}</strong>
+                    </div>
+                    <div class="diagnostic-result">
+                        <span>Kurtosis:</span>
+                        <strong>${jb.kurtosis.toFixed(4)}</strong>
+                    </div>
+                    <div class="info-box">
+                        <strong>${jb.normal ? '✅' : '❌'}</strong> ${jb.conclusion}
+                    </div>
+                </div>
+            `;
+            
+            // Breusch-Pagan
+            const bp = diagnostics.breusch_pagan;
+            html += `
+                <div class="diagnostic-card">
+                    <h3>📊 Prueba de Homocedasticidad (Breusch-Pagan)</h3>
+                    <div class="diagnostic-result">
+                        <span>Estadístico BP:</span>
+                        <strong>${bp.statistic.toFixed(4)}</strong>
+                    </div>
+                    <div class="diagnostic-result">
+                        <span>P-value:</span>
+                        <strong>${bp.p_value.toFixed(6)}</strong>
+                    </div>
+                    <div class="info-box">
+                        <strong>${bp.homoscedastic ? '✅' : '❌'}</strong> ${bp.conclusion}
+                    </div>
+                </div>
+            `;
+            if (diagnostics.white) {
+                const white = diagnostics.white;
+                html += `
+                    <div class="diagnostic-card">
+                        <h3>📈 Prueba de Heterocedasticidad General (White)</h3>
+
+                        <div class="diagnostic-result">
+                            <span>Estadístico White:</span>
+                            <strong>${white.statistic.toFixed(4)}</strong>
+                        </div>
+
+                        <div class="diagnostic-result">
+                            <span>P-value:</span>
+                            <strong>${white.p_value.toFixed(6)}</strong>
+                        </div>
+
+                        <div class="diagnostic-result">
+                            <span>Grados de libertad:</span>
+                            <strong>${white.df}</strong>
+                        </div>
+
+                        <div class="info-box">
+                            <strong>${white.efficient ? "✅" : "❌"}</strong> ${white.conclusion}
+                        </div>
+                    </div>
+                `;
+            }
+            
+            // Durbin-Watson
+            const dw = diagnostics.durbin_watson;
+            html += `
+                <div class="diagnostic-card">
+                    <h3>🔄 Prueba de Autocorrelación (Durbin-Watson)</h3>
+                    <div class="diagnostic-result">
+                        <span>Estadístico DW:</span>
+                        <strong>${dw.statistic.toFixed(4)}</strong>
+                    </div>
+                    <div class="info-box">
+                        <strong>${!dw.autocorrelated ? '✅' : '❌'}</strong> ${dw.conclusion}
+                    </div>
+                </div>
+            `;
+            
+            // VIF
+            const vif = diagnostics.vif;
+            html += `
+                <div class="diagnostic-card">
+                    <h3>🔗 Factor de Inflación de Varianza (VIF) - Multicolinealidad</h3>
+            `;
+            
+            if (vif.vif_values && vif.vif_values.length > 0) {
+                vif.vif_values.forEach(item => {
+                    const color = item.vif > 10 ? '#dc3545' : (item.vif > 5 ? '#ffc107' : '#28a745');
+                    html += `
+                        <div class="diagnostic-result">
+                            <span>${item.variable}:</span>
+                            <strong style="color: ${color}">VIF = ${item.vif.toFixed(4)}</strong>
+                        </div>
+                    `;
+                });
+            }
+            
+            html += `
+                    <div class="info-box">
+                        <strong>${!vif.multicollinear ? '✅' : '❌'}</strong> ${vif.conclusion}
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('diagnosticsContainer').innerHTML = html;
+        }
+        
+        function displayPlot(plotBase64) {
+            document.getElementById('plotContainer').innerHTML = `
+                <img src="data:image/png;base64,${plotBase64}" alt="Gráficos de Diagnóstico">
+            `;
+        }
+    </script>
+</body>
+</html>
