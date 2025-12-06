@@ -151,6 +151,12 @@
             padding-bottom: 10px;
         }
 
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
         table {
             width: 100%;
             border-collapse: collapse;
@@ -158,6 +164,7 @@
             border-radius: 10px;
             overflow: hidden;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            min-width: 700px;
         }
 
         thead {
@@ -277,6 +284,38 @@
         .download-btn:hover {
             background: #218838;
         }
+
+        @media (max-width: 768px) {
+            table, thead, tbody, th, td, tr {
+                display: block;
+            }
+        
+            thead {
+                display: none;
+            }
+        
+            tr {
+                margin-bottom: 15px;
+                background: #fff;
+                padding: 15px;
+                border-radius: 10px;
+                box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            }
+        
+            td {
+                text-align: right;
+                position: relative;
+                padding-left: 50%;
+            }
+        
+            td::before {
+                content: attr(data-label);
+                position: absolute;
+                left: 15px;
+                font-weight: bold;
+                color: #667eea;
+            }
+        }        
     </style>
 </head>
 <body>
@@ -402,6 +441,7 @@
                 // Mostrar gráficos
                 displayPlot(data.plot);
                 
+                document.querySelector('.download-btn').href = `/download/${data.file_id}`;
                 loading.style.display = 'none';
                 results.style.display = 'block';
                 
@@ -409,14 +449,14 @@
                 loading.style.display = 'none';
                 errorContainer.innerHTML = `
                     <div class="error">
-                        <strong>❌ Error:</strong> ${error.message}
+                        <strong>Error:</strong> ${error.message}
                     </div>
                 `;
             }
         });
         
         function displayCoefficients(coefficients) {
-            let html = '<table><thead><tr>';
+            let html = '<div class="table-responsive"><table><thead><tr>';
             html += '<th>Variable</th><th>Beta (β̂)</th><th>Error Estándar</th><th>t</th>';
             html += '<th>P-value</th><th>IC 95% Inferior</th><th>IC 95% Superior</th><th>Significativo</th>';
             html += '</tr></thead><tbody>';
@@ -435,7 +475,7 @@
                 </tr>`;
             });
             
-            html += '</tbody></table>';
+            html += '</tbody></table></div>';
             document.getElementById('coefficientsTable').innerHTML = html;
         }
         

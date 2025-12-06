@@ -644,8 +644,8 @@ def download_results(file_id):
         return "No hay resultados disponibles", 404
     
     with open(filepath, "r", encoding="utf-8") as f:
-        results = json.load(f)'''
-
+        results = json.load(f)
+'''
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
