@@ -4,7 +4,7 @@ Flask Web Application
 Incluye: OLS + Pruebas de Normalidad, Homocedasticidad, Multicolinealidad, Autocorrelación
 """
 
-from flask import Flask, render_template, request, send_file, jsonify, session
+from flask import Flask, render_template, request, send_file, jsonify, session, send_from_directory
 import numpy as np
 import pandas as pd
 import matplotlib
@@ -636,6 +636,18 @@ def save_results_to_file(results):
         json.dump(results, f)
 
     return file_id
+
+@app.route('/datasets')
+def list_datasets():
+    files = os.listdir(app.config['UPLOAD_FOLDER'])
+    files = [f for f in files if f.lower().endswith(('.csv','.xls','.xlsx'))]
+
+    return jsonify({'datasets': files})
+
+
+@app.route('/datasets/download/<filename>')
+def download_dataset(filename):
+    return send_from_directory(app.config['UPLOAD_FOLDER'], filename, as_attachment=True)
 
 '''@app.route('/download/<file_id>')
 def download_results(file_id):

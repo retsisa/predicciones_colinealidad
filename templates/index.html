@@ -290,6 +290,68 @@
         .download-btn:hover {
             background: #218838;
         }
+
+        /* Texto pequeño consistente */
+        .note-text {
+            color: #666;
+            display: block;
+            margin-top: 5px;
+        }
+
+        /* Botón full width en móviles */
+        .btn.full-width {
+            width: 100%;
+            text-align: center;
+        }
+
+        /* Sección datasets más limpia */
+        .datasets-section {
+            margin-top: 25px;
+        }
+
+        /* Tabla responsiva */
+        #datasetsList table {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed; /* se adapta mejor en móvil */
+        }
+
+        #datasetsList td, #datasetsList th {
+            padding: 10px;
+            text-align: left;
+            word-wrap: break-word; /* hacer que los nombres no se salgan */
+        }
+
+        /* Para pantallas pequeñas */
+        @media (max-width: 600px) {
+
+            /* Input archivo más compacto */
+            #fileInput {
+                max-width: 100%;
+                font-size: 14px;
+            }
+
+            /* Cambiar tamaño del botón */
+            .btn {
+                width: 100%;
+                padding: 12px;
+                font-size: 16px;
+            }
+
+            /* Ajustar texto */
+            h2 {
+                font-size: 20px;
+            }
+
+            /* Tabla más legible */
+            #datasetsList table {
+                font-size: 14px;
+            }
+
+            #datasetsList td:nth-child(2) {
+                width: 30%;
+            }
+        }
     </style>
 </head>
 <body>
@@ -311,7 +373,16 @@
                             Máximo 5000 observaciones, formato CSV o Excel
                         </small>
                     </div>
-
+                    <section class="datasets-section">
+                        <h2 style="margin-bottom: 20px; color: #333;">Datasets de Ejemplo Disponibles</h2>
+                    
+                        <button type="button" class="btn" onclick="loadDatasets()">📂 Ver Datasets Disponibles</button>
+                    
+                        <div id="datasetsList" style="margin-top:20px;"></div>
+                    
+                        <hr style="margin:30px 0;">
+                    
+                    </section>
                     <div class="form-group">
                         <label>📈 Variable Dependiente (Y)</label>
                         <input type="text" id="yVar" name="y_var" placeholder="Ejemplo: ventas, precio, y" required>
@@ -428,6 +499,53 @@
                 `;
             }
         });
+
+        async function loadDatasets() {
+            const container = document.getElementById("datasetsList");
+            container.innerHTML = "<p>Cargando datasets...</p>";
+        
+            try {
+                const response = await fetch("/datasets");
+                const data = await response.json();
+        
+                if (data.datasets.length === 0) {
+                    container.innerHTML = "<p>No hay datasets en la carpeta uploads.</p>";
+                    return;
+                }
+        
+                let html = `
+                    <div class="table-responsive">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Dataset</th>
+                                    <th>Descargar</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                `;
+        
+                data.datasets.forEach(file => {
+                    html += `
+                        <tr>
+                            <td>${file}</td>
+                            <td>
+                                <a class="btn download-btn" 
+                                   href="/datasets/download/${file}">
+                                   📥 Descargar
+                                </a>
+                            </td>
+                        </tr>
+                    `;
+                });
+        
+                html += "</tbody></table></div>";
+        
+                container.innerHTML = html;
+            } catch (err) {
+                container.innerHTML = `<div class="error">Error al cargar datasets.</div>`;
+            }
+        }        
         
         function displayCoefficients(coefficients) {
             let html = '<div class="table-responsive"><table><thead><tr>';
